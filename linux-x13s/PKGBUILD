@@ -7,7 +7,7 @@ pkgbase=linux-x13s
 _srcname=linux
 _kernelname=${pkgbase#linux}
 _desc="ThinkPad X13s (Snapdragon 8cx Gen 3)"
-pkgver="6.2"
+pkgver="6.3"
 pkgrel=0
 arch=('aarch64')
 url="http://www.kernel.org/"
@@ -19,30 +19,30 @@ source=('config'
         'kernel_data_key.vbprivk'
         'linux.preset'
         '60-linux.hook'
-        '90-linux.hook')
-md5sums=('57b6d6b8033a52b95e91e1574f861e06'
+        '90-linux.hook'
+        '0001-Fixed-internal-keyboard-interrupt-handling.patch')
+
+
+md5sums=('SKIP'
          '61c5ff73c136ed07a7aadbf58db3d96a'
          '584777ae88bce2c5659960151b64c7d8'
          '41cb5fef62715ead2dd109dbea8413d6'
          '0a5f16bfec6ad982a2f6782724cca8ba'
-         '3dc88030a8f2f5a5f97266d99b149f77')
+         '3dc88030a8f2f5a5f97266d99b149f77'
+	 '68d016b293f34f7b7f2416705f286883')
 
 prepare() {
   if [[ ! -e "linux/" ]]; then
-    git clone --depth=1 https://github.com/steev/linux.git -b lenovo-x13s-v6.2
+    git clone --depth=1 https://github.com/steev/linux.git -b lenovo-x13s-linux-v6.3.0
   fi
 
   cd linux
+
   echo "Setting version..."
-  scripts/setlocalversion --save-scmversion
   echo "-$pkgrel" > localversion.10-pkgrel
   echo "${pkgbase#linux}" > localversion.20-pkgname
 
-  # add upstream patch
-  # We are using a custom tree, not needed
-
-  # ALARM patches
-  # Nothing to patch right now
+  patch -Np1 -i ../0001-Fixed-internal-keyboard-interrupt-handling.patch
 
   cat "${srcdir}/config" > ./.config
 }
@@ -56,7 +56,7 @@ build() {
 
   # build!
   unset LDFLAGS
-  make ${MAKEFLAGS} Image Image.gz modules
+  make ${MAKEFLAGS} -j6 Image Image.gz modules
   # Generate device tree blobs with symbols to support applying device tree overlays in U-Boot
   make ${MAKEFLAGS} DTC_FLAGS="-@" dtbs
 }
